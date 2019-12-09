@@ -1,0 +1,195 @@
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{timetable}[2019/11/22]
+\RequirePackage{tikz, xparse, tcolorbox}
+%改良すべき点
+%４．\時間の\setcounterの有無を分岐にする<-うまくいかん<-多分出来た．要動作確認
+%５．任意の時間までのタイムテーブルを作れるようにする<-どう考えてもむずい<-ムリ<-駒祭と合宿の分だけできた
+\usetikzlibrary{calc}
+\tcbuselibrary{xparse,hooks,skins,breakable}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\newif\if@komaba\@komabafalse
+\DeclareOption{komaba}{\@komabatrue}
+\DeclareOption{notkomaba}{\@komabafalse}
+\ProcessOptions\relax
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%カウンタその他諸々
+\newcommand{\文字色}{red!70!blue}
+\newcommand{\テーマカラー}{red!50!}
+\newcounter{日にち}
+\setcounter{日にち}{0}
+\newcount\branch
+\newcount\hourA
+\newcount\hourB
+\newcount\minuteA
+\newcount\minuteB
+\newcount\bighour
+\newcount\smallhour
+%\usepackage[bottom=15truemm]{geometry}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%タイトル（ascolorboxより抽出）
+\tcbset{ascbox@ascolorbox/.style={after skip=1.5mm, before skip=3mm},
+ascboxsizeset@ascolorbox/.style={top=0mm,bottom=0mm,right=-1mm,left=2mm,},
+titleunderline@ascolorbox/.style={underlay pre={\draw[very thick,draw=\文字色] 
+([yshift=.7mm,xshift=3mm]frame.south west) -- ([yshift=.7mm]frame.south east);}}}
+\tcbset{rectangle@ascboxA/.style={underlay={\fill[\文字色] ([xshift=.5mm,yshift=.5mm]frame.#1) -- ++ (-1mm,0mm) -- ++ (0mm,-1mm) -- ++ (1mm,0mm) -- cycle;}},
+rectangle@ascboxA/.default={north east},
+horizontalline@ascboxA/.style={underlay={\draw[\文字色] ([xshift=1mm]frame.#1 west) -- ([xshift=-1mm]frame.#1 east);}},
+horizontalline@ascboxA/.default={north}}
+\DeclareTCBox{\ascboxA}{ O{} }%
+{enhanced,ascbox@ascolorbox,colframe=white,colback=white,top=-.5mm,bottom=-.5mm,left=1mm,right=1mm,
+rectangle@ascboxA,rectangle@ascboxA={north west},rectangle@ascboxA={south west},rectangle@ascboxA={south east},horizontalline@ascboxA,horizontalline@ascboxA={south},
+#1}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+ %分がゼロだったときの分岐
+ \newcommand{\MinuteA}{
+ \ifnum\minuteA > 9
+ \hspace{-0.06cm}\the\minuteA
+ \else{\hspace{-0.06cm}0\the\minuteA}\fi
+ }
+ \newcommand{\MinuteB}{
+ \ifnum\minuteB > 9
+ \hspace{-0.06cm}\the\minuteB
+ \else{\hspace{-0.06cm}0\the\minuteB
+ }\fi
+ }
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+ %イベント作成コマンド
+  \NewDocumentCommand\イベント{s O{0} m m O{\relax}}{
+  \hourA =#3
+\hourB =#4
+  \ifnum \the\hourA > \the\hourB
+\bighour =\hourA
+\smallhour =\hourB
+\hourA = \smallhour
+\hourB = \bighour
+\else{}
+\fi 
+\minuteA =\hourA
+\minuteB =\hourB
+\divide\hourA by 100
+\divide\hourB by 100
+\multiply\hourA by 100
+\multiply\hourB by 100
+\advance\minuteA by -\hourA
+\advance\minuteB by -\hourB
+\divide\hourA by 100
+\divide\hourB by 100
+\IfBooleanTF{#1}{
+\branch = #2
+\ifnum \the\branch=1
+ \fill[fill=white, opacity=.6] ($(0.5, -6*\the\hourA) + (0, -\the\minuteA /10)$) rectangle ($(4.5, -6*\the\hourB) + (0, -\the\minuteB /10) +(0,0.5)$);
+ \draw[thick, black!50!, opacity=.6]($(0.5, -6*\the\hourB) + (0, -\the\minuteB /10) +(0,0.5)$)--($(0.5, -6*\the\hourA) + (0, -\the\minuteA /10)$) --($(4.5, -6*\the\hourA) + (0, -\the\minuteA /10)$) --($(4.5, -6*\the\hourB) + (0, -\the\minuteB /10) +(0,0.5)$);
+ \draw[black!50!, thick, dashed, opacity=.6]($(0.5, -6*\the\hourB) + (0, -\the\minuteB /10) +(0,0.5)$)--($(4.5, -6*\the\hourB) + (0, -\the\minuteB /10) +(0,0.5)$);
+ \node at ($(0.5, -\the\hourA *6) + (0, -\the\minuteA /10)+(0,0.1)$) [below right] {\scriptsize{\the\hourA：\MinuteA}};
+\node at ($(4.5, -\the\hourB *6) + (0, -\the\minuteB /10)+(0,0.2)$) [above left] {\scriptsize{\the\hourB：\hspace{-0.15cm}\MinuteB}};
+ \else{
+ \ifnum \the\branch=2
+   \fill[fill=white, opacity=.6] ($(0.5, -6*\the\hourA) + (0, -\the\minuteA /10)+(0,-0.5)$) rectangle ($(4.5, -6*\the\hourB) + (0, -\the\minuteB /10) +(0,0.5)$);
+ \draw[thick, black!50!, opacity=.6]($(0.5, -6*\the\hourB) + (0, -\the\minuteB /10) +(0,0.5)$)--($(0.5, -6*\the\hourA) + (0, -\the\minuteA /10)+(0,-0.5)$);
+ \draw[thick, black!50!, opacity=.6]($(4.5, -6*\the\hourB) + (0, -\the\minuteB /10) +(0,0.5)$)--($(4.5, -6*\the\hourA) + (0, -\the\minuteA /10)+(0,-0.5)$);
+ \draw[black!50!, thick, dashed, opacity=.6]($(0.5, -6*\the\hourB) + (0, -\the\minuteB /10) +(0,0.5)$)--($(4.5, -6*\the\hourB) + (0, -\the\minuteB /10) +(0,0.5)$);
+   \draw[black!50!, thick, dashed, opacity=.6]($(0.5, -6*\the\hourA) + (0, -\the\minuteA /10)+(0,-0.5)$)--($(4.5, -6*\the\hourA) + (0, -\the\minuteA /10)+(0,-0.5)$);  
+   \node at ($(0.5, -\the\hourA *6) + (0, -\the\minuteA /10) + (0,-0.2)$) [below right] {\scriptsize{\the\hourA：\MinuteA}};
+\node at ($(4.5, -\the\hourB *6) + (0, -\the\minuteB /10)+(0,0.2)$) [above left] {\scriptsize{\the\hourB：\MinuteB}};
+    \else{
+  \ifnum \the\branch=3
+   \fill[fill=white, opacity=.6] ($(0.5, -6*\the\hourA) + (0, -\the\minuteA /10)+(0,-0.5)$) rectangle ($(4.5, -6*\the\hourB) + (0, -\the\minuteB /10)$);
+ \draw[thick, black!50!, opacity=.6]($(0.5, -6*\the\hourA) + (0, -\the\minuteA /10)+(0,-0.5)$)-- ($(0.5, -6*\the\hourB) + (0, -\the\minuteB /10)$)-- ($(4.5, -6*\the\hourB) + (0, -\the\minuteB /10)$)--($(4.5, -6*\the\hourA) + (0, -\the\minuteA /10)+(0,-0.5)$);
+ \draw[black!50!, thick, dashed, opacity=.6]($(0.5, -6*\the\hourA) + (0, -\the\minuteA /10)+(0,-0.5)$)--($(4.5, -6*\the\hourA) + (0, -\the\minuteA /10)+(0,-0.5)$);
+ \node at ($(0.5, -\the\hourA *6) + (0, -\the\minuteA /10) + (0,-0.2)$) [below right] {\scriptsize{\the\hourA：\MinuteA}};
+\node at ($(4.5, -\the\hourB *6) + (0, -\the\minuteB /10)+(0,-0.1)$) [above left] {\scriptsize{\the\hourB：\MinuteB}};
+   \else{
+    \filldraw[fill=white, draw=black!50!, opacity=.6, thick] ($(0.5, -6*\the\hourA) + (0, -\the\minuteA /10)$) rectangle ($(4.5, -6*\the\hourB) + (0, -\the\minuteB /10)$);
+    \node at ($(0.5, -\the\hourA *6) + (0, -\the\minuteA /10)+(0,0.1)$) [below right] {\scriptsize{\the\hourA：\MinuteA}};
+\node at ($(4.5, -\the\hourB *6) + (0, -\the\minuteB /10)+(0,-0.1)$) [above left] {\scriptsize{\the\hourB：\MinuteB}};
+  }\fi
+  }\fi
+  }\fi
+}
+{
+\branch = #2
+\ifnum \the\branch=1
+ \fill[fill=white, opacity=.6] ($(0.5, -6*\the\hourA) + (0, -\the\minuteA /10)$) rectangle ($(4.5, -6*\the\hourB) + (0, -\the\minuteB /10) +(0,0.5)$);
+ \draw[thick, black!50!, opacity=.6]($(0.5, -6*\the\hourB) + (0, -\the\minuteB /10) +(0,0.5)$)--($(0.5, -6*\the\hourA) + (0, -\the\minuteA /10)$) --($(4.5, -6*\the\hourA) + (0, -\the\minuteA /10)$) --($(4.5, -6*\the\hourB) + (0, -\the\minuteB /10) +(0,0.5)$);
+ \draw[black!50!, thick, dashed, opacity=.6]($(0.5, -6*\the\hourB) + (0, -\the\minuteB /10) +(0,0.5)$)--($(4.5, -6*\the\hourB) + (0, -\the\minuteB /10) +(0,0.5)$);
+ \node at ($(0.5, -\the\hourA *6) + (0, -\the\minuteA /10)+(0,0.1)$) [below right] {\scriptsize{\the\hourA：\MinuteA}};
+\node at ($(0.5, -\the\hourB *6) + (0, -\the\minuteB /10)+(0,0.2)$) [above right] {\scriptsize{\the\hourB：\MinuteB}};
+ \else{
+ \ifnum \the\branch=2
+   \fill[fill=white, opacity=.6] ($(0.5, -6*\the\hourA) + (0, -\the\minuteA /10)+(0,-0.5)$) rectangle ($(4.5, -6*\the\hourB) + (0, -\the\minuteB /10) +(0,0.5)$);
+ \draw[thick, black!50!, opacity=.6]($(0.5, -6*\the\hourB) + (0, -\the\minuteB /10) +(0,0.5)$)--($(0.5, -6*\the\hourA) + (0, -\the\minuteA /10)+(0,-0.5)$);
+ \draw[thick, black!50!, opacity=.6]($(4.5, -6*\the\hourB) + (0, -\the\minuteB /10) +(0,0.5)$)--($(4.5, -6*\the\hourA) + (0, -\the\minuteA /10)+(0,-0.5)$);
+ \draw[black!50!, thick, dashed, opacity=.6]($(0.5, -6*\the\hourB) + (0, -\the\minuteB /10) +(0,0.5)$)--($(4.5, -6*\the\hourB) + (0, -\the\minuteB /10) +(0,0.5)$);
+   \draw[black!50!, thick, dashed, opacity=.6]($(0.5, -6*\the\hourA) + (0, -\the\minuteA /10)+(0,-0.5)$)--($(4.5, -6*\the\hourA) + (0, -\the\minuteA /10)+(0,-0.5)$);  
+   \node at ($(0.5, -\the\hourA *6) + (0, -\the\minuteA /10) + (0,-0.2)$) [below right] {\scriptsize{\the\hourA：\MinuteA}};
+\node at ($(0.5, -\the\hourB *6) + (0, -\the\minuteB /10)+(0,0.2)$) [above right] {\scriptsize{\the\hourB：\MinuteB}};
+    \else{
+  \ifnum \the\branch=3
+   \fill[fill=white, opacity=.6] ($(0.5, -6*\the\hourA) + (0, -\the\minuteA /10)+(0,-0.5)$) rectangle ($(4.5, -6*\the\hourB) + (0, -\the\minuteB /10)$);
+ \draw[thick, black!50!, opacity=.6]($(0.5, -6*\the\hourA) + (0, -\the\minuteA /10)+(0,-0.5)$)-- ($(0.5, -6*\the\hourB) + (0, -\the\minuteB /10)$)-- ($(4.5, -6*\the\hourB) + (0, -\the\minuteB /10)$)--($(4.5, -6*\the\hourA) + (0, -\the\minuteA /10)+(0,-0.5)$);
+ \draw[black!50!, thick, dashed, opacity=.6]($(0.5, -6*\the\hourA) + (0, -\the\minuteA /10)+(0,-0.5)$)--($(4.5, -6*\the\hourA) + (0, -\the\minuteA /10)+(0,-0.5)$);
+ \node at ($(0.5, -\the\hourA *6) + (0, -\the\minuteA /10) + (0,-0.2)$) [below right] {\scriptsize{\the\hourA：\MinuteA}};
+\node at ($(0.5, -\the\hourB *6) + (0, -\the\minuteB /10)+(0,-0.1)$) [above right] {\scriptsize{\the\hourB：\MinuteB}};
+   \else{
+    \filldraw[fill=white, draw=black!50!, opacity=.6, thick] ($(0.5, -6*\the\hourA) + (0, -\the\minuteA /10)$) rectangle ($(4.5, -6*\the\hourB) + (0, -\the\minuteB /10)$);
+    \node at ($(0.5, -\the\hourA *6) + (0, -\the\minuteA /10)+(0,0.1)$) [below right] {\scriptsize{\the\hourA：\MinuteA}};
+\node at ($(0.5, -\the\hourB *6) + (0, -\the\minuteB /10)+(0,-0.1)$) [above right] {\scriptsize{\the\hourB：\MinuteB}};
+  }\fi
+  }\fi
+  }\fi
+}\node at ($0.5*(0.5, -6*\the\hourA) + 0.5*(0, -\the\minuteA /10)+0.5*(4.5, -6*\the\hourB) + 0.5*(0, -\the\minuteB /10)$) {\large\textbf{#5}};
+}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\def\横サイズ{
+\if@komaba
+\@横サイズ
+\else
+\@@横サイズ
+\fi}
+\def\縦サイズ{
+\if@komaba
+\@縦サイズ
+\else
+\@@縦サイズ
+\fi}
+\newcommand{\@縦サイズ}{0.4}
+\newcommand{\@横サイズ}{0.6}
+\newcommand{\@@横サイズ}{0.4}
+\newcommand{\@@縦サイズ}{0.15}
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+ %時間軸の作成<-実際の合宿内容に合わせて一部定義内容を変更する必要あり
+\def\時間{
+\if@komaba
+\begin{tikzpicture}[xscale=\横サイズ, yscale=\縦サイズ]
+\foreach\x in {9,10,...,18} 
+\node at (0,-6*\x) {\Large\textbf{\color{\文字色} \x:00}};
+\end{tikzpicture}
+\else
+\begin{tikzpicture}[xscale=\横サイズ, yscale=\縦サイズ]
+\foreach\x in {0,1,...,24}
+\node at (0,-6*\x) {\textbf{\color{\文字色} \x:00}};
+\end{tikzpicture}
+\fi
+\ifstar
+\else
+\setcounter{日にち}{0}
+\fi
+}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%イベントコマンド用の環境作成<-はよ分岐作成．おそらくそれで終了？
+\newenvironment{タイムテーブル}
+ {\stepcounter{日にち}
+ \begin{tikzpicture}[xscale=\横サイズ, yscale=\縦サイズ]
+ \node at (2.5,-51.5) {\ascboxA
+ {\Large\textbf{\color{\文字色}\the\value{日にち}日目}}};
+ \fill[\テーマカラー] (0,-53.25) rectangle (5,-108.75);
+ \foreach \x  in{-54,-60,...,-108}
+ \draw[white,thick] (0,\x) -- (5,\x);
+ \foreach \y in{-57,-63,...,-105}
+ \draw[white,dashed,thick](0,\y)--(5,\y);
+ }
+ {\end{tikzpicture}
+\hspace{1cm}
+}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
