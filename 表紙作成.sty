@@ -1,0 +1,111 @@
+%2019/12/10 by Stream
+\usepackage[x11names,rgb]{xcolor}
+\usepackage{tikz}
+\usepackage[hidelinks]{hyperref}
+\usetikzlibrary{calc}
+\makeatletter
+\newif\if@特別号 \@特別号false
+\DeclareOption{特別号}{\@特別号true}\ProcessOptions
+\def\背景色{RoyalBlue4}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\def\冊子名{COSMOS}
+\def\発行年月#1#2{
+\def\@年{#1}\def\@月{#2}
+}
+\def\@@月{
+\ifnum\@月>9
+\@月
+\else
+0\@月
+\fi
+}
+
+\def\特別号タイトル#1#2{\def\@特別号タイトル{#1}\def\@@特別号タイトル{#2}}
+\def\巻数#1{第#1巻}
+\def\号数#1{第#1号}
+\def\通巻数#1{通巻#1号}
+\def\@タイトル{
+\node at ([xshift=10.5mm, yshift=-10.5mm]current page.north west) [below right] {{\fontsize{80pt}{0pt}\selectfont\color{black}{\textit {\冊子名}}}};
+\node at ([xshift=10mm, yshift=-10mm]current page.north west) [below right] {{\fontsize{80pt}{0pt}\selectfont\color{white}{\textit {\冊子名}}}};
+}
+\def\@補助タイトル{
+\if@特別号
+\node at ([xshift=-21.7mm, yshift=-20.7mm] current page.north east) {\color{black}{\fontsize{30pt}{0pt}\selectfont\@特別号タイトル}};
+\node at ([xshift=-22mm, yshift=-21mm] current page.north east) {\color{white}{\fontsize{30pt}{0pt}\selectfont\@特別号タイトル}};
+\node at ([xshift=-21.7mm, yshift=-30.2mm] current page.north east) {\color{black}{\fontsize{17pt}{0pt}\selectfont\@@特別号タイトル 号}};
+\node at ([xshift=-22mm, yshift=-30mm] current page.north east) {\color{white}{\fontsize{17pt}{0pt}\selectfont\@@特別号タイトル 号}};
+\else
+%\node at ([xshift=-21.7mm, yshift=-19.2mm] current page.north east) {\color{black}{\fontsize{60pt}{0pt}\selectfont\@月}};
+%\node at ([xshift=-22mm, yshift=-19.5mm] current page.north east) {\color{white}{\fontsize{60pt}{0pt}\selectfont\@月}};
+%\node at ([xshift=-21.8mm, yshift=-29.8mm] current page.north east) {\color{black}{\fontsize{15pt}{0pt}\selectfont\@年}};
+%\node at ([xshift=-22mm, yshift=-30mm] current page.north east) {\color{white}{\fontsize{15pt}{0pt}\selectfont\@年}};
+\node at ([xshift=-9.7mm, yshift=-20.2mm] current page.north east) [below left] {\color{black}{\fontsize{20pt}{0pt}\selectfont\@年\hspace{1mm}\fontsize{40pt}{0pt}\selectfont\@@月}};
+\node at ([xshift=-10mm, yshift=-20mm] current page.north east) [below left] {\color{white}{\fontsize{20pt}{0pt}\selectfont\@年\hspace{1mm}\fontsize{40pt}{0pt}\selectfont\@@月}};
+\fi
+}
+
+\def\表紙画像#1{
+\if@特別号
+\begin{scope}
+\clip ([yshift=-103.5mm, xshift=-76mm]current page.center) rectangle ([xshift=76mm, yshift=85mm]current page.center);
+\node at ([yshift=-14.25mm]current page.center) {\includegraphics[height=198.5mm]{表紙_\@年_\@特別号タイトル\@@特別号タイトル.jpg}};
+\end{scope}
+\else
+\begin{scope}
+\clip ([yshift=-103.5mm, xshift=-76mm]current page.center) rectangle ([xshift=76mm, yshift=85mm]current page.center);
+\node at ([yshift=-14.25mm]current page.center) {\includegraphics[height=198.5mm]{表紙_\@年_\@月.jpg}};
+\end{scope}
+\node at ([yshift=-103.7mm, xshift=76.2mm]current page.center) [above left] {\color{black}{\large\textit{Photo by #1}}};
+\node at ([yshift=-103.5mm, xshift=76mm]current page.center) [above left] {\color{white}{\large\textit{Photo by #1}}};
+\fi
+}
+
+\def\COSMOS情報#1#2#3{
+\node at ([yshift=16mm, xshift=-10mm]current page.south east) [left]{\Large\color{white}{\href{http://www.ut-astro.org}{東京大学地文研究会天文部}}};
+\node at ([yshift=12mm, xshift=-10mm]current page.south east) [left]{\color{white}{\@年 年\@月 月\the\day 日発行}};
+\node at ([yshift=8mm, xshift=-10mm]current page.south east) [left]{\color{white}{\巻数{#1}/\巻数{#2}/\通巻数{#3}}};
+}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\newcount\@特集記事
+\@特集記事=0
+\newcount\@その他記事
+\@その他記事=0
+
+\def\特集#1{
+\ifnum\@特集記事=0
+\fill[black!10!, opacity=0.7] ([xshift=-74mm, yshift=81mm] current page.center) rectangle +(17mm, -14mm);
+\node at ([xshift=-72mm, yshift=76mm] current page.center) [right] {\LARGE \color{DodgerBlue4}特集};
+\node at ([xshift=-75.5mm, yshift=63.5mm]current page.center)[right]{\fontsize{60pt}{0pt}\selectfont\color{black}{#1}};
+\node at ([xshift=-76mm, yshift=64mm]current page.center)[right]{\fontsize{60pt}{0pt}\selectfont\color{white}{#1}};
+\advance\@特集記事 by 1
+\else
+\node at ([xshift=-75.5mm, yshift=38.5mm]current page.center)[right]{\fontsize{60pt}{0pt}\selectfont\color{black}{#1}};
+\node at ([xshift=-76mm, yshift=39mm]current page.center)[right]{\fontsize{60pt}{0pt}\selectfont\color{white}{#1}};
+\fi
+}
+\def\記事#1{
+\coordinate (記事) at ([xshift=-70mm, yshift=20mm]current page.center);
+\ifnum\@その他記事=0
+\node at ($(記事) + (.2mm, -.2mm)$) [right]{\fontsize{20pt}{0pt}\selectfont\color{black}{#1}};
+\node at (記事)[right]{\fontsize{20pt}{0pt}\selectfont\color{white}{#1}};
+\advance\@その他記事 by 1
+\else
+\node at ($(記事) + (.2mm,-.2mm) - (0,\the\その他記事)$)[right]{\fontsize{20pt}{0pt}\selectfont\color{black}{#1}};
+\node at ($(記事) - (0,\the\その他記事)$) [right]{\fontsize{20pt}{0pt}\selectfont\color{white}{#1}};
+\advance\@その他記事 by 1
+\fi
+}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\newenvironment{表紙}[4]{
+\thispagestyle{empty}
+\begin{tikzpicture}[remember picture, overlay]
+\fill[fill=\背景色] (current page.north east)-- (current page.north west) -- (current page.south west)-- (current page.south east);
+\@タイトル
+\@補助タイトル
+\表紙画像{#1}
+\COSMOS情報{#2}{#3}{#4}
+}{
+\end{tikzpicture}
+\newpage
+}
+\makeatother
