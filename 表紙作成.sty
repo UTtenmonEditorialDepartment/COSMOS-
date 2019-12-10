@@ -35,12 +35,19 @@
 }
 
 \def\表紙画像#1{
+\if特別号
 \begin{scope}
 \clip ([yshift=-103.5mm, xshift=-76mm]current page.center) rectangle ([xshift=76mm, yshift=85mm]current page.center);
-\node at ([yshift=-14.25mm]current page.center) {\includegraphics[height=198.5mm]{表紙_\the\year_\the\month.jpg}};
+\node at ([yshift=-14.25mm]current page.center) {\includegraphics[height=198.5mm]{表紙_\the\year_\特別号タイトル１\特別号タイトル２.jpg}};
+\end{scope}
+\else
+\begin{scope}
+\clip ([yshift=-103.5mm, xshift=-76mm]current page.center) rectangle ([xshift=76mm, yshift=85mm]current page.center);
+\node at ([yshift=-14.25mm]current page.center) {¥includegraphics[height=198.5mm]{表紙_\the\year_\the\month.jpg}};
 \end{scope}
 \node at ([yshift=-103.7mm, xshift=76.2mm]current page.center) [above left] {\color{black}{\large\textit{Photo by #1}}};
 \node at ([yshift=-103.5mm, xshift=76mm]current page.center) [above left] {\color{white}{\large\textit{Photo by #1}}};
+\fi
 }
 
 \def\COSMOS情報#1#2#3{
